@@ -1,0 +1,6 @@
+.DS_Store
+*.DS_Store
+tmp_venv/
+tmp_excel_parser/
+__pycache__/
+*.pyc

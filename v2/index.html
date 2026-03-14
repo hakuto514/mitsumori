@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>御見積書ジェネレーター V2</title>
+    <meta
+      name="description"
+      content="御見積書を簡単に作成・PDF/Excel出力できるジェネレーター V2"
+    />
+    <!-- xlsx-js-style (supports cell styling/borders) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>
+        🧊 御見積書ジェネレーター
+        <span style="font-size: 11px; opacity: 0.7; font-weight: 400">V2</span>
+      </h1>
+      <div class="header-actions">
+        <button class="theme-toggle" onclick="toggleTheme()" title="テーマ切替">
+          <div class="theme-toggle-thumb">🌓</div>
+        </button>
+      </div>
+    </header>
+
+    <nav class="tab-bar">
+      <button
+        class="tab-btn active"
+        data-tab="basic"
+        onclick="switchTab('basic')"
+      >
+        基本情報 <span class="tab-badge empty" id="badge-basic">○</span>
+      </button>
+      <button class="tab-btn" data-tab="parts" onclick="switchTab('parts')">
+        部品 <span class="tab-badge empty" id="badge-parts">○</span>
+      </button>
+      <button class="tab-btn" data-tab="labor" onclick="switchTab('labor')">
+        作業費 <span class="tab-badge empty" id="badge-labor">○</span>
+      </button>
+      <button class="tab-btn" data-tab="output" onclick="switchTab('output')">
+        設定・出力 <span class="tab-badge empty" id="badge-output">○</span>
+      </button>
+    </nav>
+
+    <!-- ===== 基本情報タブ ===== -->
+    <div id="tab-basic" class="tab-content active">
+      <div class="section-title">見積書情報</div>
+      <div class="form-row c2">
+        <div class="form-group">
+          <label>見積書番号 <span style="color: var(--red)">*</span></label>
+          <input id="estNo" value="051260105-6" />
+          <div class="validation-msg"></div>
+        </div>
+        <div class="form-group">
+          <label>発行日 <span style="color: var(--red)">*</span></label>
+          <input id="issueDate" type="date" value="2026-03-04" />
+          <div class="validation-msg"></div>
+        </div>
+      </div>
+      <div class="form-row c2">
+        <div class="form-group">
+          <label>有効期限</label><input id="validity" value="14日間" />
+        </div>
+        <div class="form-group">
+          <label>支払条件</label><input id="payTerms" value="従来通り" />
+        </div>
+      </div>
+      <div class="section-title">お客様情報</div>
+      <div class="form-group">
+        <label>顧客名 <span style="color: var(--red)">*</span></label>
+        <input id="custName" value="" placeholder="例: 社会福祉法人サンプル施設" />
+        <div class="validation-msg"></div>
+      </div>
+      <div class="form-row c2">
+        <div class="form-group">
+          <label>納入場所</label><input id="delivPlace" value="" />
+        </div>
+        <div class="form-group">
+          <label>納期</label><input id="delivDate" value="お打ち合わせ" />
+        </div>
+      </div>
+      <div class="section-title">機器情報</div>
+      <div class="form-row c2">
+        <div class="form-group">
+          <label>製品名</label
+          ><input id="prodName" value="" placeholder="例: キューブアイスメーカー" />
+        </div>
+        <div class="form-group">
+          <label>機種</label><input id="modelNo" value="" placeholder="例: IM-45L" />
+        </div>
+      </div>
+      <div class="form-row c2">
+        <div class="form-group">
+          <label>設置日</label><input id="installDate" type="date" value="" />
+        </div>
+        <div class="form-group">
+          <label>機番</label><input id="serialNo" value="" placeholder="例: F10624" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>コール内容</label><input id="callContent" value="" placeholder="例: 氷できない" />
+      </div>
+      <div class="form-group">
+        <label>故障原因・処置</label>
+        <textarea id="causeAction" rows="3" placeholder="例: 製氷機構部不良のため下記部品の交換が必要となります。尚、経年劣化のため今後も不具合が発生する可能性があります。"></textarea
+        >
+      </div>
+      <div class="section-title">発行元情報</div>
+      <div class="form-group">
+        <label>会社名 <span style="color: var(--red)">*</span></label>
+        <input id="compName" value="ホシザキ中国株式会社" />
+        <div class="validation-msg"></div>
+      </div>
+      <div class="form-group">
+        <label>本社住所</label
+        ><input id="compAddr" value="〒730-0854 広島市中区土橋町1-13" />
+      </div>
+      <div class="form-group">
+        <label>担当部署</label><input id="compDept" value="鳥取営業所" />
+      </div>
+      <div class="form-group">
+        <label>営業所住所</label
+        ><input id="compBranch" value="〒689-0425 鳥取市鹿野町今市1558" />
+      </div>
+      <div class="form-row c2">
+        <div class="form-group">
+          <label>TEL</label><input id="compTel" value="0857-84-2575" />
+        </div>
+        <div class="form-group">
+          <label>FAX</label><input id="compFax" value="0857-84-2655" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 部品タブ ===== -->
+    <div id="tab-parts" class="tab-content">
+      <div class="summary-card" id="partsSummary">
+        <div
+          style="font-weight: 700; margin-bottom: 8px; color: var(--primary)"
+        >
+          📊 部品粗利サマリー
+        </div>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="val" id="sumCost">¥0</div>
+            <div class="lbl">仕入合計</div>
+          </div>
+          <div class="summary-item">
+            <div class="val" id="sumSell">¥0</div>
+            <div class="lbl">部品売価合計</div>
+          </div>
+          <div class="summary-item">
+            <div class="val" id="sumProfit">0%</div>
+            <div class="lbl">部品粗利率</div>
+          </div>
+          <div class="summary-item">
+            <div class="val" id="sumMargin">¥0</div>
+            <div class="lbl">粗利額</div>
+          </div>
+        </div>
+      </div>
+      <div id="partsContainer"></div>
+      <div class="card">
+        <div class="form-group">
+          <label>補助材料費</label>
+          <input
+            id="auxMaterial"
+            type="number"
+            value="1500"
+            onchange="recalc()"
+          />
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="addPart()">
+        ＋ 部品を追加
+      </button>
+    </div>
+
+    <!-- ===== 作業費タブ ===== -->
+    <div id="tab-labor" class="tab-content">
+      <div class="section-title">作業費項目</div>
+      <div id="laborContainer"></div>
+      <button class="btn btn-primary btn-block" onclick="addLabor()">
+        ＋ 作業費を追加
+      </button>
+      <div class="section-title" style="margin-top: 20px">値引き</div>
+      <div id="discountContainer"></div>
+      <button class="btn btn-outline btn-block" onclick="addDiscount()">
+        ＋ 値引きを追加
+      </button>
+    </div>
+
+    <!-- ===== 設定・出力タブ ===== -->
+    <div id="tab-output" class="tab-content">
+      <div class="section-title">担当者</div>
+      <div class="pill-container" id="staffPills"></div>
+      <button class="btn btn-outline btn-sm" onclick="openStaffModal()">
+        ＋ 担当者を管理
+      </button>
+
+      <div class="section-title">テンプレート</div>
+      <div class="template-list" id="templateList"></div>
+      <button class="btn btn-outline btn-block" onclick="saveTemplate()">
+        📋 現在のデータをテンプレートとして保存
+      </button>
+
+      <div class="section-title">備考</div>
+      <div class="form-group">
+        <textarea id="remarks" rows="5">
+＊上記以外の不良箇所につきましては、別途お見積とさせて頂きます。
+＊上記見積は平日9時〜18時の作業となります。夜間・日祭日作業の際は別途時間外作業料金が発生致します。
+＊見積有効期限を超えた場合又は修理しない場合は初回出張診断料のみご請求させて頂きます。　13200円（税込）</textarea
+        >
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary btn-block" onclick="openPreview()">
+          📄 プレビュー ＆ PDFダウンロード
+        </button>
+        <button class="btn btn-success btn-block" onclick="exportExcel()">
+          📥 Excelダウンロード
+        </button>
+        <button class="btn btn-danger btn-block" onclick="resetAll()">
+          🗑 リセット
+        </button>
+      </div>
+    </div>
+
+    <!-- 粗利モニター -->
+    <div class="profit-monitor">
+      <div class="profit-grid">
+        <div class="profit-item">
+          <div class="profit-label">税抜小計</div>
+          <div class="profit-value" id="monSubtotal">¥0</div>
+        </div>
+        <div class="profit-item">
+          <div class="profit-label">税込合計</div>
+          <div class="profit-value" id="monTotal">¥0</div>
+        </div>
+        <div class="profit-item">
+          <div class="profit-label">粗利率</div>
+          <div class="profit-value" id="monMargin">0%</div>
+          <div class="profit-bar">
+            <div class="profit-bar-fill" id="monBar" style="width: 0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 担当者モーダル -->
+    <div class="modal-overlay" id="staffModal">
+      <div class="modal" style="max-width: 500px">
+        <div class="modal-header">
+          <h3>担当者管理</h3>
+          <button class="modal-close" onclick="closeStaffModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="staffList"></div>
+          <div class="form-row c2" style="margin-top: 12px">
+            <div class="form-group">
+              <input id="newStaff" placeholder="担当者名（例：山田 太郎）" />
+            </div>
+            <div>
+              <button class="btn btn-primary" onclick="addStaff()">追加</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- プレビューモーダル -->
+    <div class="modal-overlay" id="previewModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>御見積書プレビュー</h3>
+          <div>
+            <button
+              class="btn btn-outline btn-sm"
+              onclick="sharePDF()"
+              style="margin-right: 8px"
+              id="shareBtn"
+            >
+              📤 共有
+            </button>
+            <button
+              class="btn btn-primary btn-sm"
+              onclick="downloadPDF()"
+              style="margin-right: 8px"
+            >
+              📄 PDFダウンロード
+            </button>
+            <button class="modal-close" onclick="closePreview()">×</button>
+          </div>
+        </div>
+        <div class="modal-body" id="previewBody" style="background: #fff"></div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="excel.js"></script>
+  </body>
+</html>
